@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 	  {
 		  continue;
 	  }
-	  printf("[*]  pid is %d\n", pid);
+	  // printf("[*]  pid is %d\n", pid);
 
     //find cloned process
 	  clone_pid = get_clone_pid(pid);
@@ -64,11 +64,11 @@ int main(int argc, char *argv[]) {
 	  {
 	    continue;
 	  }
-	  printf("[*]  clone pid is %d\n", clone_pid);
+	  // printf("[*]  clone pid is %d\n", clone_pid);
 
           memory_region memory;
           //ptrace cloned process
-          printf("[*]  ptrace [clone_pid] %d\n", clone_pid);
+          // printf("[*]  ptrace [clone_pid] %d\n", clone_pid);
        	  mem_file = attach_get_memory(clone_pid);
 	  if(mem_file == -10201) 
 	  {
@@ -87,11 +87,11 @@ int main(int argc, char *argv[]) {
 	     * Begin Scanning
 	     */
 	  dumped_file_name = malloc(strlen(static_safe_location) + strlen(package_name) + strlen(suffix));
-	  sprintf(dumped_file_name, "%s%s%s", static_safe_location, package_name, suffix);
+	  sprintf(dumped_file_name, "%s/%s/%s%s", static_safe_location, package_name, package_name, suffix);
 	  printf("[*]  Scanning dex ...\n");
 	  if(find_magic_memory(clone_pid, mem_file, &memory, dumped_file_name) <= 0)
 	  {
-	    printf("[*]  The magic was Not Found!\n");
+	    // printf("[*]  The magic was Not Found!\n");
             ptrace(PTRACE_DETACH, clone_pid, NULL, 0);
             close(mem_file);
 	    continue;
@@ -217,7 +217,7 @@ int find_magic_memory(uint32_t clone_pid, int memory_fd, memory_region *memory ,
 
 	  char each_filename[254] = {0};
 	  char randstr[10] = {0};
-	  sprintf(randstr ,"%d", rand()%9999 );
+	  sprintf(randstr ,"%d", len);
 
 	  strncpy(each_filename , file_name , 200);	//防溢出
 	  strncat(each_filename , randstr , 10);
@@ -233,7 +233,7 @@ int find_magic_memory(uint32_t clone_pid, int memory_fd, memory_region *memory ,
 	   {
 		  char *buffer = malloc(len);
 	 	  ssize_t readlen = read(memory_fd, buffer, len);
-      printf("meminfo: %s ,len: %d ,readlen: %d, start: %x\n",mem_info, len, readlen, memory->start);
+      // printf("meminfo: %s ,len: %d ,readlen: %d, start: %x\n",mem_info, len, readlen, memory->start);
       if(buffer[1] == 'E' && buffer[2] == 'L' && buffer[3] == 'F')
       {
         free(buffer);

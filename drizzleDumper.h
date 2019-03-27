@@ -18,6 +18,7 @@
 //#include <linux/user.h>
 #include <sys/user.h>
 #include <sys/reg.h>
+#include <strings.h>
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>    /* C99 */
@@ -76,7 +77,7 @@ typedef struct DexHeader {
 } DexHeader;
 
 //#define ORIG_EAX 11
-static const char* static_safe_location = "/data/local/tmp/";
+static const char* static_safe_location = "/mnt/sdcard/Android/data";
 static const char* suffix = "_dumped_";
 
 typedef struct {
