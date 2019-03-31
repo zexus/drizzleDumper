@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
 	uint32_t pid = -1;
 
 	int i = 0;
+	int scan_count = 20;
 	int mem_file;
 	uint32_t clone_pid;
 	char *extra_filter;
@@ -45,7 +46,7 @@ int main(int argc, char *argv[])
 	/*
    * Into the loop
    */
-	while (1)
+	while (scan_count > 0)
 	{
 		//wait some time
 		sleep(wait_times);
@@ -87,28 +88,26 @@ int main(int argc, char *argv[])
 		/*
 	     * Begin Scanning
 	     */
-		dumped_file_name = malloc(strlen(static_safe_location) + strlen(package_name) + strlen(suffix));
+		dumped_file_name = malloc(strlen(static_safe_location) + strlen(package_name) + strlen(package_name) + strlen(suffix));
 		sprintf(dumped_file_name, "%s/%s/%s%s", static_safe_location, package_name, package_name, suffix);
 		printf("[*]  Scanning dex ...\n");
 		if (find_magic_memory(clone_pid, mem_file, &memory, dumped_file_name) <= 0)
 		{
 			// printf("[*]  The magic was Not Found!\n");
+			scan_count--;
 			ptrace(PTRACE_DETACH, clone_pid, NULL, 0);
 			close(mem_file);
 			continue;
 		}
 		else
 		{
-			/*
-         * Successed & exit
-         */
+			printf("[*]  Done.\n");
 			close(mem_file);
 			ptrace(PTRACE_DETACH, clone_pid, NULL, 0);
 			break;
 		}
 	}
 
-	printf("[*]  Done.\n\n");
 	return 1;
 }
 
@@ -201,8 +200,7 @@ int find_magic_memory(uint32_t clone_pid, int memory_fd, memory_region *memory, 
 		char mem_info[1024] = {0};
 		sscanf(mem_line, "%8[^-]-%8[^ ]%*s%*s%*s%*s%s", mem_address_start, mem_address_end, mem_info);
 		memset(mem_line, 0, 1024);
-		uint32_t mem_start = strtoul(mem_address_start, NULL, 16);
-		memory->start = mem_start;
+		memory->start = strtoul(mem_address_start, NULL, 16);;
 		memory->end = strtoul(mem_address_end, NULL, 16);
 
 		int len = memory->end - memory->start;
@@ -239,9 +237,9 @@ int find_magic_memory(uint32_t clone_pid, int memory_fd, memory_region *memory, 
 			if (buffer[1] == 'E' && buffer[2] == 'L' && buffer[3] == 'F')
 			{
 				free(buffer);
-
 				continue;
 			}
+
 			if (buffer[0] == 'd' && buffer[1] == 'e' && buffer[2] == 'x' && buffer[3] == '\n' && buffer[4] == '0' && buffer[5] == '3')
 			{
 				printf(" [+] find dex, len : %d , info : %s\n", readlen, mem_info);
@@ -250,13 +248,14 @@ int find_magic_memory(uint32_t clone_pid, int memory_fd, memory_region *memory, 
 				memcpy(&header, buffer, sizeof(DexHeader));
 				sprintf(real_lenstr, "%x", header.fileSize);
 				long real_lennum = strtol(real_lenstr, NULL, 16);
-				printf(" [+] This dex's fileSize: %d\n", real_lennum);
+				// printf(" [+] This dex's fileSize: %d\n", real_lennum);
 
 				if (dump_memory(buffer, len, each_filename) == 1)
 				{
 					printf(" [+] dex dump into %s\n", each_filename);
 					free(buffer);
-					continue;
+					ret = 1;
+					break;
 				}
 				else
 				{
@@ -291,7 +290,8 @@ int find_magic_memory(uint32_t clone_pid, int memory_fd, memory_region *memory, 
 				{
 					printf(" [+] dex dump into %s\n", each_filename);
 					free(buffer);
-					continue; //如果本次成功了，就不尝试其他方法了
+					ret = 1;
+					break;
 				}
 				else
 				{
